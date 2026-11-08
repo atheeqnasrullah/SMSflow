@@ -1,0 +1,72 @@
+[
+ {
+  "name": "empty",
+  "text": "",
+  "encoding": "GSM7",
+  "length": 0,
+  "segments": 0
+ },
+ {
+  "name": "short gsm",
+  "text": "Hello from SMSFlow!",
+  "encoding": "GSM7",
+  "length": 19,
+  "segments": 1
+ },
+ {
+  "name": "160 gsm",
+  "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "encoding": "GSM7",
+  "length": 160,
+  "segments": 1
+ },
+ {
+  "name": "161 gsm",
+  "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "encoding": "GSM7",
+  "length": 161,
+  "segments": 2
+ },
+ {
+  "name": "306 gsm",
+  "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "encoding": "GSM7",
+  "length": 306,
+  "segments": 2
+ },
+ {
+  "name": "extension chars count double",
+  "text": "Price: 10€ {promo}",
+  "encoding": "GSM7",
+  "length": 21,
+  "segments": 1
+ },
+ {
+  "name": "sinhala",
+  "text": "ආයුබෝවන්",
+  "encoding": "UCS2",
+  "length": 8,
+  "segments": 1
+ },
+ {
+  "name": "tamil",
+  "text": "வணக்கம்",
+  "encoding": "UCS2",
+  "length": 7,
+  "segments": 1
+ },
+ {
+  "name": "emoji switches to ucs2",
+  "text": "Sale today 🎉",
+  "encoding": "UCS2",
+  "length": 13,
+  "segments": 1
+ },
+ {
+  "name": "71 ucs2",
+  "text": "ආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආආ",
+  "encoding": "UCS2",
+  "length": 71,
+  "segments": 2
+ }
+]

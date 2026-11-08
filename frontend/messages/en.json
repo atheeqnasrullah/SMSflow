@@ -1,0 +1,61 @@
+{
+  "brand": { "tagline": "One Platform. Every Customer. Smarter Communication." },
+  "nav": {
+    "overview": "Overview",
+    "contacts": "Contacts",
+    "campaigns": "Campaigns",
+    "messages": "Messages",
+    "templates": "Templates",
+    "reports": "Reports",
+    "billing": "Billing",
+    "developers": "Developers",
+    "settings": "Settings",
+    "admin": "Admin console",
+    "logout": "Log out",
+    "features": "Features",
+    "pricing": "Pricing",
+    "docs": "Docs",
+    "contact": "Contact",
+    "login": "Log in",
+    "register": "Start free"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "loading": "Loading…",
+    "send": "Send",
+    "back": "Back",
+    "next": "Next",
+    "none": "Nothing here yet",
+    "demoMode": "DEMO MODE",
+    "demoBanner": "Your workspace is in demo mode. Messages go through the demo gateway – no real SMS is sent and nothing is billed.",
+    "requestLive": "Request live access"
+  },
+  "landing": {
+    "heroTitle": "Bulk SMS, OTP and notifications for Sri Lankan businesses",
+    "heroBody": "Reach every customer in English, Sinhala and Tamil. Campaigns, scheduling, a developer API and transparent per-segment pricing – in one platform.",
+    "ctaPrimary": "Create free account",
+    "ctaSecondary": "Read the API docs"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "businessName": "Business name",
+    "businessType": "Business type",
+    "loginTitle": "Welcome back",
+    "registerTitle": "Create your SMSFlow workspace",
+    "forgot": "Forgot password?",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?"
+  },
+  "sms": {
+    "characters": "characters",
+    "segments": "segments",
+    "unicodeWarning": "This message contains non-GSM characters ({chars}) and will be sent as Unicode (70 characters per SMS)."
+  }
+}

@@ -1,0 +1,67 @@
+# Production overrides: managed PostgreSQL/Redis, TLS at Nginx, images from the registry.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Required env (.env on the host or secret manager): DATABASE_URL, ADMIN_DATABASE_URL, REDIS_URL,
+# CELERY_BROKER_URL, JWT_SECRET (or JWT_PRIVATE_KEY/JWT_PUBLIC_KEY), ENCRYPTION_KEY, OTP_HASH_SECRET,
+# PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET, SMTP_*, SENTRY_DSN, PUBLIC_URL, IMAGE_TAG.
+
+x-prod-env: &prod-env
+  ENV: production
+  LOG_JSON: "true"
+  TASK_MODE: celery
+  PAYHERE_SANDBOX: "false"
+  ALLOW_PAYMENT_SIMULATION: "false"
+  DATABASE_URL: ${DATABASE_URL}
+  ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL}
+  REDIS_URL: ${REDIS_URL}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  FRONTEND_URL: ${PUBLIC_URL}
+  API_PUBLIC_URL: ${PUBLIC_URL}
+  CORS_ORIGINS: ${PUBLIC_URL}
+
+services:
+  postgres:
+    profiles: ["local-db"]   # use managed PostgreSQL with PITR in production
+  redis:
+    profiles: ["local-db"]
+
+  migrate:
+    image: ${REGISTRY:-ghcr.io/smsflow}/api:${IMAGE_TAG:-latest}
+    environment: *prod-env
+    depends_on: !reset []
+  api:
+    image: ${REGISTRY:-ghcr.io/smsflow}/api:${IMAGE_TAG:-latest}
+    environment: *prod-env
+    deploy: { replicas: 2 }
+  worker-send:
+    image: ${REGISTRY:-ghcr.io/smsflow}/api:${IMAGE_TAG:-latest}
+    environment:
+      <<: *prod-env
+      DB_NULL_POOL: "true"
+    depends_on: !reset []
+    deploy: { replicas: 2 }
+  worker-default:
+    image: ${REGISTRY:-ghcr.io/smsflow}/api:${IMAGE_TAG:-latest}
+    environment:
+      <<: *prod-env
+      DB_NULL_POOL: "true"
+    depends_on: !reset []
+  beat:
+    image: ${REGISTRY:-ghcr.io/smsflow}/api:${IMAGE_TAG:-latest}
+    environment:
+      <<: *prod-env
+      DB_NULL_POOL: "true"
+    depends_on: !reset []
+    deploy: { replicas: 1 }
+  flower:
+    image: ${REGISTRY:-ghcr.io/smsflow}/api:${IMAGE_TAG:-latest}
+    environment: *prod-env
+    depends_on: !reset []
+    ports: !reset ["127.0.0.1:5555:5555"]
+  web:
+    image: ${REGISTRY:-ghcr.io/smsflow}/web:${IMAGE_TAG:-latest}
+    deploy: { replicas: 2 }
+  nginx:
+    volumes:
+      - ./infra/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    ports: !override ["80:80", "443:443"]

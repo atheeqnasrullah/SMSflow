@@ -1,0 +1,118 @@
+# Local / single-host stack: postgres, redis, api, workers, beat, web, nginx, flower.
+#   cp .env.example .env && docker compose up --build
+#   docker compose run --rm api python -m app.scripts.seed --demo-tenant
+# Open http://localhost  (API docs: http://localhost/api/docs, Flower: http://localhost:5555)
+
+x-backend: &backend
+  build: ./backend
+  env_file: .env
+  environment: &backend-env
+    ENV: ${ENV:-local}
+    DATABASE_URL: postgresql+asyncpg://smsflow_app:${APP_DB_PASSWORD:-smsflow_app}@postgres:5432/smsflow
+    ADMIN_DATABASE_URL: postgresql+asyncpg://smsflow:${POSTGRES_PASSWORD:-smsflow}@postgres:5432/smsflow
+    REDIS_URL: redis://redis:6379/0
+    CELERY_BROKER_URL: redis://redis:6379/1
+    TASK_MODE: celery
+    FRONTEND_URL: ${PUBLIC_URL:-http://localhost}
+    API_PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+    CORS_ORIGINS: ${PUBLIC_URL:-http://localhost}
+    STORAGE_DIR: /data/storage
+  volumes:
+    - storage:/data/storage
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  restart: unless-stopped
+
+x-worker-env: &worker-env
+  <<: *backend-env
+  DB_NULL_POOL: "true"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: smsflow
+      POSTGRES_USER: smsflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smsflow}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-smsflow_app}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smsflow -d smsflow"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health/ready"]
+      interval: 15s
+      retries: 5
+
+  worker-send:
+    <<: *backend
+    environment: *worker-env
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "-Q", "sms.send,sms.priority", "-c", "8", "-n", "send@%h", "--loglevel=INFO"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker-default:
+    <<: *backend
+    environment: *worker-env
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "-Q", "campaigns,dlr,webhooks,default", "-c", "4", "-n", "default@%h", "--loglevel=INFO"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  beat:
+    <<: *backend
+    environment: *worker-env
+    # Exactly ONE beat instance.
+    command: ["celery", "-A", "app.workers.celery_app", "beat", "--loglevel=INFO", "-s", "/tmp/celerybeat-schedule"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  flower:
+    <<: *backend
+    command: ["celery", "-A", "app.workers.celery_app", "flower", "--port=5555", "--basic-auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-change-me}"]
+    ports: ["5555:5555"]
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        API_ORIGIN: http://api:8000
+    restart: unless-stopped
+    depends_on: [api]
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports: ["80:80"]
+    depends_on: [api, web]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  storage:

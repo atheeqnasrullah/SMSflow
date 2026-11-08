@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: deploy
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          docker build -t $REGISTRY/api:${{ github.sha }} backend
+          docker build -t $REGISTRY/web:${{ github.sha }} frontend
+          docker push $REGISTRY/api:${{ github.sha }}
+          docker push $REGISTRY/web:${{ github.sha }}
+
+  staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migrate and roll out (expand → migrate → contract)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/smsflow && git pull --ff-only
+            export IMAGE_TAG=${{ github.sha }} REGISTRY=${{ env.REGISTRY }}
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm migrate
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+      - name: Smoke test
+        run: curl -fsS ${{ secrets.STAGING_URL }}/health/ready
+
+  production:
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production   # requires manual approval in repository settings
+    steps:
+      - uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/smsflow && git pull --ff-only
+            export IMAGE_TAG=${{ github.sha }} REGISTRY=${{ env.REGISTRY }}
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm migrate
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+      - run: curl -fsS ${{ secrets.PROD_URL }}/health/ready

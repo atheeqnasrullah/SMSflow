@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+backend/storage/
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+node_modules/
+.next/
+frontend/src/types/openapi.d.ts
+next-env.d.ts
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Misc
+backups/
+.DS_Store

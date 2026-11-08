@@ -12,6 +12,8 @@ os.environ.update(
         "TASK_MODE": "inline",
         "REDIS_URL": "memory://",
         "RATE_LIMIT_PER_SECOND": "1000",
+        # pytest-asyncio gives each test its own event loop; pooled asyncpg connections would leak across loops.
+        "DB_NULL_POOL": "true",
         "STORAGE_DIR": str(_tmp / "storage"),
         "QUIET_HOURS_ENABLED": "false",
         "DEMO_DLR_MIN_DELAY": "0",

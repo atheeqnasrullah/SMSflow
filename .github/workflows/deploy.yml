@@ -1,5 +1,7 @@
 name: Deploy
 
+# Deployment is opt-in: set the repository variable DEPLOY_ENABLED=true (Settings → Secrets and
+# variables → Actions → Variables) after configuring the staging/production environments and secrets.
 on:
   push:
     branches: [main]
@@ -12,6 +14,7 @@ env:
 
 jobs:
   build:
+    if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     permissions: { contents: read, packages: write }
     steps:
